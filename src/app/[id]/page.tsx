@@ -1,12 +1,12 @@
 'use client'
-import React,{useState,useEffect} from 'react'
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Image from 'next/image';
-import background from '../img/hero-image-wr.jpg'
-import logo from '../img/Logo.svg'
+import background from '../img/hero-image-wr.jpg';
+import logo from '../img/Logo.svg';
 
 interface Country {
-  id: number; // เพิ่ม id ใน interface
+  id: number;
   name: {
     common: string;
     official: string;
@@ -15,68 +15,55 @@ interface Country {
   area: string;
   capital: string;
   subregion: string;
-  languages: Languages;
-  currencies: Currencies;
+  languages: {
+    [key: string]: string;
+  };
+  currencies: {
+    [key: string]: {
+      name: string;
+    };
+  };
   continents: string;
   flags: {
     png: string;
   };
 }
 
-interface Languages {
-  [key: string]: string;
-}
-
-interface Currencies {
-  [key: string]: {
-    name: string;
+interface PageProps {
+  params: {
+    id: number;
   };
 }
-interface pageProp{
-  params:any;
-  flags: {
-      png: string;
-    };
-  name: {
-    common : string;
-    official : string;
-  };
-  population:string;
-  area:string;
-  capital:string;
-  subregion:string;
-  languages:Languages;
-  currencies:Currencies;
-  continents:string;
-}
 
-export default function page({ params }: pageProp) {
-  const index = params.id; // นำ index มาจาก params
-
+const Page: React.FC<PageProps> = ({ params }) => {
   const [country, setCountry] = useState<Country | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    axios.get(`https://restcountries.com/v3.1/all`)
-      .then(response => {
-        if (response.data && response.data[index]) {
-          const countryData = response.data[index];
-          // เพิ่ม id ให้กับข้อมูลประเทศ
-          const countryWithId: Country = {
-            ...countryData,
-            id: index,
-          };
-          setCountry(countryWithId);
+    axios
+      .get(`https://restcountries.com/v3.1/all`)
+      .then((response) => {
+        if (response.data && response.data[params.id]) {
+          const countryData = response.data[params.id] as Country; // Cast to Country type
+          setCountry({ ...countryData, id: params.id }); // Add id property
         } else {
           throw new Error('Country data not found');
         }
       })
-      .catch(error => {
+      .catch((error) => {
         console.error('Error fetching country data:', error);
+      })
+      .finally(() => {
+        setLoading(false);
       });
-  }, [index]);
+  }, [params.id]);
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
   if (!country) {
-    return <div>Loading...</div>;
+    return <div>Country data not found.</div>;
   }
 
   return (
@@ -91,7 +78,11 @@ export default function page({ params }: pageProp) {
 
       <div className='absolute w-[55%] max-w-[55%] top-[20%] left-[50%] transform -translate-x-[50%] translate-y-[20%]  bg-[#1C1D1F] mx-5 rounded-xl border-[1px] border-[#282B30]'>
         <div className='relative'>
-          <Image src={country.flags.png} alt={country.name.common} width={100} height={100}
+          <Image
+            src={country.flags.png}
+            alt={country.name.common}
+            width={100}
+            height={100}
             className='absolute top-[20%] left-[50%] -translate-x-[50%] -translate-y-[20%] w-[300px] h-[200px] object-cover rounded-md'
           />
         </div>
@@ -149,4 +140,6 @@ export default function page({ params }: pageProp) {
       </div>
     </div>
   );
-}
+};
+
+export default Page;
