@@ -1,113 +1,272 @@
-import Image from "next/image";
+'use client'
+import Image from 'next/image'
+import background from './img/hero-image-wr.jpg'
+import logo from './img/Logo.svg'
+import search from './img/Search.svg'
+import axios from 'axios'
+import Link from 'next/link'
+import { ChangeEvent, useEffect, useState } from 'react'
+import down from '../img/Expand_down.svg'
+import check from '../img/Done_round.svg'
 
-export default function Home() {
+
+interface Country {
+  name: {
+    common : string
+  };
+  population: number;
+  region: string;
+  flags: {
+    png: string;
+  };
+  area:string;
+  index:number;
+}
+
+export default function page() {
+
+  const [countries, setCountries] = useState<Country[]>([]);
+  const [allCountries, setAllCountries] = useState<Country[]>([]);
+  const [startPage ,setStartPage] = useState(0)
+  const [endPage ,setEndPage] = useState(20)
+  const [regions, setRegions] = useState('')
+
+    //----------------------------pagination------------------------------------
+    const [page,setPage] = useState(1)
+
+    const prevPage =() => {
+      setPage(page => page-1)
+      setStartPage(startPage => startPage-20)
+      setEndPage(endPage => endPage-20)
+    }
+    const nextPage = ()=>{
+      setPage(page => page+1)
+      setStartPage(startPage => startPage+20)
+      setEndPage(endPage => endPage+20)
+    }
+
+  useEffect(() => {
+    axios.get('https://restcountries.com/v3.1/all')
+      .then(response => {
+        if (response.data) {
+          setAllCountries(response.data); // เก็บข้อมูลประเทศทั้งหมดไว้ที่ตัวแปร allCountries
+          setCountries(response.data.slice(startPage, endPage)); // ตั้งค่า countries เริ่มต้นด้วยข้อมูลแผ่นหน้า
+        } else {
+          throw new Error('Failed to fetch data');
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching data:', error);
+      });
+  }, [startPage, endPage]);
+
+  //------------------------------findRegion------------------------
+  const findRegion = (region: string) => {
+    setRegions(region);
+    if(regions === region){
+      setRegions('')
+    }
+  };
+
+  useEffect(()=>{
+     // กรองประเทศจาก allCountries ที่มีภูมิภาคตรงกับ region
+     const filteredCountries = allCountries.filter(country => country.region.includes(regions));
+     setCountries(filteredCountries);
+     if(regions === ''){
+      setCountries(allCountries.slice(startPage, endPage))
+     }
+  },[regions])
+
+  //------------------------- checkbok--------------------------------------
+  const [isCheck,setIsCheck] = useState(false)
+  const [isCheck2,setIsCheck2] = useState(false)
+
+  const openCheck = ()=>{
+    setIsCheck(!isCheck)
+  }
+  const openCheck2 = ()=>{
+    setIsCheck2(!isCheck2)
+  }
+ 
+//--------------------------------------InputChange-------------------------------
+
+  const [input, setInput] = useState('')
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    setInput(e.target.value);
+
+  }
+
+  useEffect(()=>{
+    const filterData = allCountries.filter(country=>country.name.common.toLowerCase().includes(input.toLowerCase()))
+    setCountries(filterData)
+    if(input === ''){
+      setCountries(allCountries.slice(startPage, endPage))
+     }
+  },[input])
+
+
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 w-full max-w-5xl items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">src/app/page.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:size-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
+    <main className="bg-[#1B1D1F]" >
+
+      <div className='relative z-0'>
+        <Image src={background} alt='background' className='w-full h-[150px] object-cover'/>
+
+        <div className='absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2'>
+          <Image src={logo} alt='logo'/>
         </div>
       </div>
 
-      <div className="relative z-[-1] flex place-items-center before:absolute before:h-[300px] before:w-full before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-full after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 sm:before:w-[480px] sm:after:w-[240px] before:lg:h-[360px]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
+      <div className= 'w-[95%] max-w-[95%] bg-[#1C1D1F] mx-5 rounded-xl border-[1px] border-[#282B30]'>
+          <div className='flex flex-wrap items-center justify-between my-5 mx-5'>
+              <h2 className='font-[32px] text-[#6C727F]'>Found 234 countries</h2>
 
-      <div className="mb-32 grid text-center lg:mb-0 lg:w-full lg:max-w-5xl lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Docs{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
+              <div className='flex items-center bg-[#282B30] px-4 py-2 rounded-lg'>
+                <Image src={search}  width={21} height={21} alt='search'/>
+                <input type="text"
+                  onChange={handleChange}
+                  placeholder='Search by Name, Region, Subregion' 
+                  className='bg-[#282B30] text-[#646A76] outline-none w-[250px] md:w-[300px] text-[14px] px-2 py-1'
+                />
+              </div>
+          </div>
 
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Learn{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
+          <div className='w-full md:flex mx-5'>
 
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Templates{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Explore starter templates for Next.js.
-          </p>
-        </a>
+            <div className='md:w-[20%]'>
+              <h5 className='text-[#646A76] text-[12px] font-bold'>Sort by</h5>
 
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Deploy{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-balance text-sm opacity-50">
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
+              <div className='bg-[#1B1D1F] w-[80%] sm:w-[90%] flex items-center justify-between text-[#D2D5DA] rounded-md px-4 py-2 mt-1 border-2 border-[#646A76] border-opacity-[0.3]'>
+              Populations
+              <span><Image src={down} alt="down" /></span>
+              </div>
+
+              <div className='mt-8'>
+              <h5 className='text-[#646A76] text-[12px] font-bold'>Region</h5>
+              <div className='flex flex-wrap items-center gap-2 pr-10 '>
+                  <button 
+                    onClick={()=>findRegion('America')}
+                    className='text-[#646a76] text-[14px] font-semibold px-3 py-2 rounded-md hover:bg-[#282B30] hover:text-[#d2d5da] mt-2'>
+                      Americas
+                  </button>
+
+                  <button 
+                    onClick={()=>findRegion('Antarctic')}
+                    className='text-[#646a76] text-[14px] font-semibold px-3 py-2 rounded-md hover:bg-[#282B30] hover:text-[#d2d5da] mt-2'
+                  >
+                    Antarctic
+                  </button>
+
+                  <button 
+                    onClick={()=>findRegion('Africa')}
+                    className='text-[#646a76] text-[14px] font-semibold px-3 py-2 rounded-md hover:bg-[#282B30] hover:text-[#d2d5da] mt-2'
+                  >
+                    Africa
+                  </button>
+
+                  <button 
+                    onClick={()=>findRegion('Asia')}
+                    className='text-[#646a76] text-[14px] font-semibold px-3 py-2 rounded-md hover:bg-[#282B30] hover:text-[#d2d5da] mt-2'
+                  >
+                      Asia
+                    </button>
+
+                  <button 
+                    onClick={()=>findRegion('Europe')}
+                    className='text-[#646a76] text-[14px] font-semibold px-3 py-2 rounded-md hover:bg-[#282B30] hover:text-[#d2d5da] mt-2'
+                  >
+                      Europe
+                  </button>
+
+                  <button 
+                    onClick={()=>findRegion('Oceania')}
+                    className='text-[#646a76] text-[14px] font-semibold px-3 py-2 rounded-md hover:bg-[#282B30] hover:text-[#d2d5da] mt-2'
+                  >
+                      Oceania
+                  </button>
+              </div>
+              </div>
+
+              <div className='mt-10'>
+              <h5 className='text-[#646A76] text-[12px] font-bold'>Status</h5>
+
+              <div className='flex gap-2 items-center mt-2'>
+                  <div className={`w-6 h-6 border-2 border-[#646a76] rounded-md cursor-pointer ${isCheck ? 'bg-blue-500 border-none' : 'bg-transparent'}`}
+                  onClick={openCheck}
+                  >
+                  {isCheck && (
+                      <div>
+                      <Image src={check} alt='check'/>
+                      </div>
+                  )}
+                  </div>
+                  <h3 className='text-[#D2D5DA] text-[14px]'>Member of the United Nations</h3>
+              </div> 
+
+              <div className='flex gap-2 items-center mt-2'>
+                  <div className={`w-6 h-6 border-2 border-[#646a76] rounded-md cursor-pointer ${isCheck2 ? 'bg-blue-500 border-none' : 'bg-transparent'}`}
+                  onClick={openCheck2}
+                  >
+                  {isCheck2 && (
+                      <div>
+                      <Image src={check} alt='check'/>
+                      </div>
+                  )}
+                  </div>
+                  <h3 className='text-[#D2D5DA] text-[14px]'>Independent</h3>
+              </div> 
+              
+              </div>
+          </div>
+
+            <div className="md:w-[80%] mx-5 overflow-x-auto md:pl-20">
+              <table className="w-[80%] bg-[#1C1D1F] text-[#646A76]">
+                <thead>
+                  <tr className="border-b-2 border-[#646A76]">
+                    <th className="px-4 py-4 text-[12px] font-semibold">Flag</th>
+                    <th className="px-4 py-2 text-[12px] font-semibold text-center">Name</th>
+                    <th className="px-4 py-2 text-[12px] font-semibold text-start">Population</th>
+                    <th className="px-4 py-2 text-[12px] font-semibold text-start ">Area (km<sup>2</sup>)</th>
+                    <th className="px-4 py-2 text-[12px] font-semibold text-start">Region</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {countries.map((country: Country, index: number) => (
+                    <tr key={index}>
+                      <td className="px-4 py-2">
+                        <div className="flex items-center justify-center">
+                          <Link href={`/${index}`}>
+                            <Image src={country.flags.png} alt={country.name.common} width={60} height={40} className='rounded-md'/>
+                          </Link>
+                        </div>
+                      </td>
+
+                      <td className="px-4 py-2 sm:text-[14px] md:text-[16px] text-[#899bb9] text-center">{country.name.common}</td>
+                      <td className="px-4 py-2 sm:text-[14px] md:text-[16px] text-[#D2D5DA] text-start">{country.population.toLocaleString()}</td>
+                      <td className="px-4 py-2 sm:text-[14px] md:text-[16px] text-[#D2D5DA] text-start ">{country.area.toLocaleString()}</td>
+                      <td className="px-4 py-2 sm:text-[14px] md:text-[16px] text-[#D2D5DA] text-start">{country.region}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+        </div>
+
+        <div className='flex gap-4 items-center justify-center my-6'>
+              {page > 1 &&(
+                <button onClick={prevPage}
+                  className='hover:border-2 hover:border-[#6C727F] text-[#D2D5DA] px-4 py-2 rounded-md'
+                >prev</button>)}
+
+              <h3 className='text-[#6c838f]'>{page}</h3>
+
+              {page < 13 &&(<button onClick={nextPage}
+                className='hover:border-2 hover:border-[#6C727F] text-[#D2D5DA] px-4 py-2 rounded-md'
+              >next</button>)}
+        </div>
+
       </div>
     </main>
-  );
+  )
 }
